@@ -33,9 +33,9 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/",
-            "ChainCommandBundle\\": "src/ChainCommandBundle/",
-            "FooBundle\\": "src/FooBundle/",
-            "BarBundle\\": "src/BarBundle/"
+            "ChainCommandBundle\\": "src/Bundle/ChainCommandBundle/",
+            "FooBundle\\": "src/Bundle/FooBundle/",
+            "BarBundle\\": "src/Bundle/BarBundle/"
         }
     },
     "autoload-dev": {
