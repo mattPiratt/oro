@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Bundle\ChainCommandBundle\Service;
+namespace Tests\Bundle\ChainCommandBundle\Service;
 
 use ChainCommandBundle\Service\ChainCommandRegistry;
 use PHPUnit\Framework\TestCase;
