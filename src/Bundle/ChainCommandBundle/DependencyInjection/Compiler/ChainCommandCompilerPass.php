@@ -7,6 +7,7 @@ namespace ChainCommandBundle\DependencyInjection\Compiler;
 use ChainCommandBundle\Service\ChainCommandRegistry;
 use ReflectionClass;
 use ReflectionException;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -37,21 +38,39 @@ class ChainCommandCompilerPass implements CompilerPassInterface
             $memberCommandName = $this->getCommandName($memberDefinition, $serviceId);
 
             if ($memberCommandName === null) {
-                // todo: Log a warning or throw error
-                continue;
+                throw new InvalidConfigurationException(
+                    sprintf(
+                        'Service "%s" is tagged with "%s" but does not extend "%s".',
+                        $serviceId,
+                        self::CHAIN_MEMBER_TAG,
+                        Command::class
+                    )
+                );
             }
 
             foreach ($tags as $attributes) {
                 if (!isset($attributes[self::MAIN_COMMAND_ATTRIBUTE])) {
-                    // todo: Log a warning or throw error
-                    continue;
+                    throw new InvalidConfigurationException(
+                        sprintf(
+                            'Service "%s" is tagged with "%s" but does not have the "%s" attribute.',
+                            $serviceId,
+                            self::CHAIN_MEMBER_TAG,
+                            self::MAIN_COMMAND_ATTRIBUTE
+                        )
+                    );
                 }
 
                 $mainCommandName = $attributes[self::MAIN_COMMAND_ATTRIBUTE];
 
                 if (!is_string($mainCommandName) || empty($mainCommandName)) {
-                    // todo: Log a warning or throw error
-                    continue;
+                    throw new InvalidConfigurationException(
+                        sprintf(
+                            'Service "%s" is tagged with "%s" but the "%s" attribute is not a valid command name.',
+                            $serviceId,
+                            self::CHAIN_MEMBER_TAG,
+                            self::MAIN_COMMAND_ATTRIBUTE
+                        )
+                    );
                 }
 
                 // All good! Add method to the registry

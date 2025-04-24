@@ -14,8 +14,8 @@ class ChainCommandRegistryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->registry = new ChainCommandRegistry($this->logger);
+        $logger = $this->createMock(LoggerInterface::class);
+        $this->registry = new ChainCommandRegistry($logger);
     }
 
     public function testAddMemberCommand(): void
