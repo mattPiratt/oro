@@ -20,6 +20,9 @@
     </php>
 
     <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Bundle/ChainCommandBundle</directory>
+        </testsuite>
         <testsuite name="Functional">
             <directory>tests/Functional</directory>
         </testsuite>
