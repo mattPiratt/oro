@@ -1,0 +1,17 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    ChainCommandBundle\:
+        resource: '../../'
+        exclude:
+            - '../../DependencyInjection/'
+            - '../../Resources/'
+            - '../../Tests/'
+
+    # Event listener for console events
+    ChainCommandBundle\EventListener\ConsoleCommandListener:
+        tags:
+            - { name: kernel.event_subscriber }

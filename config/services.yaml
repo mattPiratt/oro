@@ -16,6 +16,9 @@ services:
     App\:
         resource: '../src/'
         exclude:
+            - '../src/BarBundle/'
+            - '../src/FooBundle/'
+            - '../src/ChainCommandBundle/'
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'

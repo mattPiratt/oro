@@ -1,0 +1,17 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    BarBundle\:
+        resource: '../../'
+        exclude:
+            - '../../DependencyInjection/'
+            - '../../Resources/'
+            - '../../Tests/'
+
+    # Register bar:hi command as a member of foo:hello chain
+    BarBundle\Command\HiCommand:
+        tags:
+            - { name: chain_command.member, main_command: 'foo:hello' }
