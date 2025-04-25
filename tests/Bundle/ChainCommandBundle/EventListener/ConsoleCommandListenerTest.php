@@ -64,6 +64,22 @@ class ConsoleCommandListenerTest extends TestCase
         $this->assertTrue(true); // Just to assert something
     }
 
+    public function testOnConsoleCommandWithEmptyCommandName(): void
+    {
+        // Given a command with no name set
+        $commandWithNoName = new Command(); // Command exists but name is not set
+        $event = new ConsoleCommandEvent($commandWithNoName, $this->input, $this->output);
+
+        // Expect the logger might be called when handling a command with no name
+        $this->logger->expects($this->never())->method('error');
+
+        // When handling the event
+        $this->listener->onConsoleCommand($event);
+
+        // Then no exception should be thrown and command should run
+        $this->assertTrue($event->commandShouldRun());
+    }
+
     public function testOnConsoleCommandWithMemberCommand(): void
     {
         // Given a member command and output
@@ -217,6 +233,22 @@ class ConsoleCommandListenerTest extends TestCase
 
         // When handling the event
         $this->listener->onConsoleTerminate($event);
+    }
+
+    public function testOnConsoleTerminateWithEmptyCommandName(): void
+    {
+        // Given a command with no name set
+        $commandWithNoName = new Command(); // Command exists but name is not set
+        $event = new ConsoleTerminateEvent($commandWithNoName, $this->input, $this->output, 0);
+
+        // Expect the logger might be called when handling a command with no name
+        $this->logger->expects($this->never())->method('error');
+
+        // When handling the event
+        $this->listener->onConsoleTerminate($event);
+
+        // Then no exception should be thrown and command should run
+        $this->assertEquals(0, $event->getExitCode());
     }
 }
 

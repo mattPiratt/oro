@@ -97,9 +97,6 @@ class ConsoleCommandListener implements EventSubscriberInterface
     public function onConsoleTerminate(ConsoleTerminateEvent $event): void
     {
         $command = $event->getCommand();
-        if (!$command) {
-            return;
-        }
 
         $commandName = $command->getName();
         if (!$commandName) {
