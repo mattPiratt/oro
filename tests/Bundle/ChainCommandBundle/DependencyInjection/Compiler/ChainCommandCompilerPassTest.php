@@ -187,6 +187,7 @@ class ChainCommandCompilerPassTest extends TestCase
         // Should return null for non-existent classes
         $this->assertNull($result);
     }
+
 }
 
 #[AsCommand(name: 'test:command')]

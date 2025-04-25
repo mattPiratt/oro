@@ -6,7 +6,6 @@ namespace ChainCommandBundle\DependencyInjection\Compiler;
 
 use ChainCommandBundle\Service\ChainCommandRegistry;
 use ReflectionClass;
-use ReflectionException;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -95,21 +94,17 @@ class ChainCommandCompilerPass implements CompilerPassInterface
             return null;
         }
 
-        try {
-            $reflectionClass = new ReflectionClass($class);
-            $attributes = $reflectionClass->getAttributes(AsCommand::class);
-            if (!empty($attributes)) {
-                $instance = $attributes[0]->newInstance();
-                if (
-                    property_exists($instance, 'name')
-                    && is_string($instance->name)
-                    && !empty($instance->name)
-                ) {
-                    return $instance->name;
-                }
+        $reflectionClass = new ReflectionClass($class);
+        $attributes = $reflectionClass->getAttributes(AsCommand::class);
+        if (!empty($attributes)) {
+            $instance = $attributes[0]->newInstance();
+            if (
+                property_exists($instance, 'name')
+                && is_string($instance->name)
+                && !empty($instance->name)
+            ) {
+                return $instance->name;
             }
-        } catch (ReflectionException $e) {
-            // We shouldn't break the container build here
         }
 
         return null; // Cannot determine name
