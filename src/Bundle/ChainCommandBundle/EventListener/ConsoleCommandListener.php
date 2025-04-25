@@ -7,6 +7,7 @@ namespace ChainCommandBundle\EventListener;
 use ChainCommandBundle\Service\ChainCommandRegistry;
 use Exception;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
@@ -96,6 +97,10 @@ class ConsoleCommandListener implements EventSubscriberInterface
      */
     public function onConsoleTerminate(ConsoleTerminateEvent $event): void
     {
+        /**
+         * For phpStan. Terminate command always has Command (never null)
+         * @var Command $command
+         */
         $command = $event->getCommand();
 
         $commandName = $command->getName();
