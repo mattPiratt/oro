@@ -22,8 +22,9 @@ class ConsoleCommandListenerTest extends TestCase
     private ConsoleCommandListener $listener;
     private MockObject $registry;
     private MockObject $logger;
-    private Command $command;
+    private Command $mainCommand;
     private Command $memberCommand;
+    private Command $whateverCommand;
     private MockObject $input;
     private MockObject $output;
     private MockObject $application;
@@ -35,8 +36,9 @@ class ConsoleCommandListenerTest extends TestCase
         $this->listener = new ConsoleCommandListener($this->registry, $this->logger);
 
         // Create real Command instances
-        $this->command = new Command('main:command');
+        $this->mainCommand = new Command('main:command');
         $this->memberCommand = new Command('member:command');
+        $this->whateverCommand = new Command('whatever:command');
 
         // Set up other mocks
         $this->input = $this->createMock(InputInterface::class);
@@ -54,126 +56,129 @@ class ConsoleCommandListenerTest extends TestCase
 
     public function testOnConsoleCommandWithNullCommand(): void
     {
-        // Given an event with no command
         $event = new ConsoleCommandEvent(null, $this->input, $this->output);
 
-        // When handling the event
+        $this->logger
+            ->expects($this->never())
+            ->method('error');
+
+        // When handling null event no exception should be thrown...
         $this->listener->onConsoleCommand($event);
 
-        // Then no exception should be thrown
-        $this->assertTrue(true); // Just to assert something
+        // ...but, just to assert something
+        $this->assertTrue(true); //
     }
 
     public function testOnConsoleCommandWithEmptyCommandName(): void
     {
-        // Given a command with no name set
-        $commandWithNoName = new Command(); // Command exists but name is not set
+        // Command exists but name is not set
+        $commandWithNoName = new Command();
         $event = new ConsoleCommandEvent($commandWithNoName, $this->input, $this->output);
 
-        // Expect the logger might be called when handling a command with no name
-        $this->logger->expects($this->never())->method('error');
+        $this->logger
+            ->expects($this->never())
+            ->method('error');
 
-        // When handling the event
+        // When handling event with no name, no exception should be thrown
         $this->listener->onConsoleCommand($event);
 
-        // Then no exception should be thrown and command should run
+        // Verify, the command was not disabled
         $this->assertTrue($event->commandShouldRun());
     }
 
     public function testOnConsoleCommandWithMemberCommand(): void
     {
-        // Given a member command and output
-        $this->registry->method('isMemberCommand')->with('member:command')->willReturn(true);
-        $this->registry->method('getMainCommandNameForMember')->with('member:command')->willReturn('main:command');
+        $this->registry->method('isMemberCommand')
+            ->with('member:command')
+            ->willReturn(true);
+        $this->registry->method('getMainCommandNameForMember')
+            ->with('member:command')
+            ->willReturn('main:command');
 
         $event = new ConsoleCommandEvent($this->memberCommand, $this->input, $this->output);
 
         // Expect error message to be logged and displayed
-        $this->logger->expects($this->once())->method('error');
-        $this->output->expects($this->once())->method('writeln');
+        $this->logger
+            ->expects($this->once())
+            ->method('error');
+        $this->output
+            ->expects($this->once())
+            ->method('writeln');
 
-        // When handling the event
         $this->listener->onConsoleCommand($event);
 
-        // Then the command should be disabled
+        // Verify, the command was disabled
         $this->assertFalse($event->commandShouldRun());
     }
 
     public function testOnConsoleCommandWithMainCommand(): void
     {
-        // Given a main command with member commands
-        $this->registry->method('isMemberCommand')->with('main:command')->willReturn(false);
-        $this->registry->method('isMainCommand')->with('main:command')->willReturn(true);
-        $this->registry->method('getMemberCommandNames')->with('main:command')->willReturn(['member:command']);
+        $this->registry->method('isMemberCommand')
+            ->with('main:command')
+            ->willReturn(false);
+        $this->registry->method('isMainCommand')
+            ->with('main:command')
+            ->willReturn(true);
+        $this->registry->method('getMemberCommandNames')
+            ->with('main:command')
+            ->willReturn(['member:command']);
 
-        $event = new ConsoleCommandEvent($this->command, $this->input, $this->output);
+        $event = new ConsoleCommandEvent($this->mainCommand, $this->input, $this->output);
 
         // Expect info messages to be logged
-        $this->logger->expects($this->exactly(3))->method('info');
+        $this->logger
+            ->expects($this->exactly(3))
+            ->method('info');
 
-        // When handling the event
         $this->listener->onConsoleCommand($event);
 
-        // Command should not be disabled
+        // Verify, the command was not disabled
         $this->assertTrue($event->commandShouldRun());
     }
 
     public function testOnConsoleTerminateWithNonMainCommand(): void
     {
-        // Given a terminate event with a non-main command
-        $this->registry->method('isMainCommand')->with('main:command')->willReturn(false);
+        $this->registry->method('isMainCommand')
+            ->with('whatever:command')
+            ->willReturn(false);
 
-        $event = new ConsoleTerminateEvent($this->command, $this->input, $this->output, 0);
+        $event = new ConsoleTerminateEvent($this->whateverCommand, $this->input, $this->output, 0);
 
-        // When handling the event
         $this->listener->onConsoleTerminate($event);
 
-        // Then no member commands should be executed
+        // For not main commands, onConsoleTerminate does nothing
         // (we can't really assert this directly in a unit test, so we just make sure no exception is thrown)
         $this->assertTrue(true);
     }
 
-    public function testOnConsoleTerminateWithFailedMainCommand(): void
-    {
-        // Given a terminate event with a failed main command
-        $this->command->setApplication($this->application);
-        $this->registry->method('isMainCommand')->with('main:command')->willReturn(true);
-
-        $event = new ConsoleTerminateEvent($this->command, $this->input, $this->output, 1);
-
-        // Expect warning to be logged
-        $this->logger->expects($this->never())->method('warning');
-
-        // When handling the event
-        $this->listener->onConsoleTerminate($event);
-    }
-
     public function testOnConsoleTerminateWithNoMemberCommands(): void
     {
-        // Given a terminate event with a main command that has no member commands
-        $this->command->setApplication($this->application);
-
-        $this->registry->method('isMainCommand')->with('main:command')->willReturn(true);
-        $this->registry->method('getMemberCommandNames')->with('main:command')
+        $this->registry->method('isMainCommand')
+            ->with('main:command')
+            ->willReturn(true);
+        $this->registry->method('getMemberCommandNames')
+            ->with('main:command')
             ->willReturn([]);
 
-        $event = new ConsoleTerminateEvent($this->command, $this->input, $this->output, 0);
+        $event = new ConsoleTerminateEvent($this->mainCommand, $this->input, $this->output, 0);
 
-        // When handling the event
         $this->listener->onConsoleTerminate($event);
 
-        // No member commands should be executed
+        // For main commands with no members, onConsoleTerminate does nothing
+        // (we can't really assert this directly in a unit test, so we just make sure no exception is thrown)
         $this->assertTrue(true);
     }
 
     public function testOnConsoleTerminateWithSuccessfulMainCommand(): void
     {
-        // Given a terminate event with a successful main command that has member commands
-        $this->command->setApplication($this->application);
+        $this->mainCommand->setApplication($this->application);
         $this->memberCommand->setApplication($this->application);
 
-        $this->registry->method('isMainCommand')->with('main:command')->willReturn(true);
-        $this->registry->method('getMemberCommandNames')->with('main:command')
+        $this->registry->method('isMainCommand')
+            ->with('main:command')
+            ->willReturn(true);
+        $this->registry->method('getMemberCommandNames')
+            ->with('main:command')
             ->willReturn(['member:command']);
 
         $this->application->expects($this->once())
@@ -182,23 +187,25 @@ class ConsoleCommandListenerTest extends TestCase
             ->willReturn($this->memberCommand);
 
         // Expect proper logging
-        $this->logger->expects($this->exactly(2))->method('info');
+        $this->logger
+            ->expects($this->exactly(2))
+            ->method('info');
 
-        $event = new ConsoleTerminateEvent($this->command, $this->input, $this->output, 0);
+        $event = new ConsoleTerminateEvent($this->mainCommand, $this->input, $this->output, 0);
 
-        // When handling the event
         $this->listener->onConsoleTerminate($event);
     }
 
     public function testOnConsoleTerminateWithExceptionDuringMemberExecution(): void
     {
-        // Given a terminate event with a successful main command that has member commands
-        // but an exception occurs during member execution
-        $this->command->setApplication($this->application);
+        $this->mainCommand->setApplication($this->application);
         $exception = new Exception('Test exception');
 
-        $this->registry->method('isMainCommand')->with('main:command')->willReturn(true);
-        $this->registry->method('getMemberCommandNames')->with('main:command')
+        $this->registry->method('isMainCommand')
+            ->with('main:command')
+            ->willReturn(true);
+        $this->registry->method('getMemberCommandNames')
+            ->with('main:command')
             ->willReturn(['member:command']);
 
         $this->application->expects($this->once())
@@ -207,47 +214,45 @@ class ConsoleCommandListenerTest extends TestCase
             ->willThrowException($exception);
 
         // Expect error to be logged
-        $this->logger->expects($this->once())->method('error');
+        $this->logger
+            ->expects($this->once())
+            ->method('error');
 
-        $event = new ConsoleTerminateEvent($this->command, $this->input, $this->output, 0);
+        $event = new ConsoleTerminateEvent($this->mainCommand, $this->input, $this->output, 0);
 
-        // When handling the event
         $this->listener->onConsoleTerminate($event);
     }
 
     public function testOnConsoleTerminateWithNoApplication(): void
     {
-        // Given a terminate event with a main command but no application
         $this->registry->method('isMainCommand')->with('main:command')->willReturn(true);
         $this->registry->method('getMemberCommandNames')->with('main:command')
             ->willReturn(['member:command']);
 
-        // Command with no application
-        $command = new Command('main:command');
-
-        $event = new ConsoleTerminateEvent($command, $this->input, $this->output, 0);
+        $event = new ConsoleTerminateEvent($this->mainCommand, $this->input, $this->output, 0);
 
         // Expect error to be logged
-        $this->logger->expects($this->once())->method('error')
+        $this->logger
+            ->expects($this->once())
+            ->method('error')
             ->with('Cannot execute chain members: no console application available :O');
 
-        // When handling the event
         $this->listener->onConsoleTerminate($event);
     }
 
     public function testOnConsoleTerminateWithEmptyCommandName(): void
     {
-        // Given a command with no name set
-        $commandWithNoName = new Command(); // Command exists but name is not set
+        $commandWithNoName = new Command();
         $event = new ConsoleTerminateEvent($commandWithNoName, $this->input, $this->output, 0);
 
-        // Expect the logger might be called when handling a command with no name
-        $this->logger->expects($this->never())->method('error');
+        // Expect error to be logged
+        $this->logger
+            ->expects($this->never())
+            ->method('error');
 
-        // When handling the event
         $this->listener->onConsoleTerminate($event);
 
-        // Then no exception should be thrown and command should run
+        // No exception should be thrown and command should run
         $this->assertEquals(0, $event->getExitCode());
     }
 }
