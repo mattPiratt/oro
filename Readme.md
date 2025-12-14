@@ -12,7 +12,7 @@ Provide two other sample bundles to demonstrate the work of this application.
 
 ## Detailed Requirements
 
-Using Symfony 5.4+ create a bundle called ChainCommandBundle.
+Using Symfony 6.4+ create a bundle called ChainCommandBundle.
 
 Any other bundle installed in the same Symfony application should be able to create their console commands
 (standard Symfony functionality) and register them as members of a command chain.
